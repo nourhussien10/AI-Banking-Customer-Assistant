@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Banking Customer Assistant</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #eef4ff, #f8faff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            height: 650px;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #3157d5, #5c7cff);
+            color: white;
+            padding: 25px 30px;
+        }
+
+        .header h1 {
+            font-size: 25px;
+            margin-bottom: 7px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .chat {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            background: #f7f9fd;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 18px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .bubble {
+            max-width: 70%;
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .bot .bubble {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .user .bubble {
+            background: #3157d5;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .input-area {
+            padding: 18px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 15px 18px;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .input-area input:focus {
+            border-color: #3157d5;
+        }
+
+        .input-area button {
+            border: none;
+            background: #3157d5;
+            color: white;
+            padding: 0 25px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .input-area button:hover {
+            background: #2447bd;
+        }
+
+        .typing {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 95%;
+                height: 90vh;
+            }
+
+            .bubble {
+                max-width: 85%;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1> AI Banking Customer Assistant</h1>
+        <p>Ask me about your banking issue</p>
+    </div>
+
+    <div class="chat" id="chat">
+
+        <div class="message bot">
+            <div class="bubble">
+                👋 Hi! I'm your AI Banking Assistant.<br>
+                How can I help you today?
+            </div>
+        </div>
+
+    </div>
+
+    <div class="typing" id="typing">
+        Assistant is thinking...
+    </div>
+
+    <div class="input-area">
+        <input
+            type="text"
+            id="messageInput"
+            placeholder="Describe your banking problem..."
+            onkeypress="handleKeyPress(event)"
+        >
+
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+</div>
+
+<script>
+
+    async function sendMessage() {
+
+        const input = document.getElementById("messageInput");
+        const message = input.value.trim();
+
+        if (!message) return;
+
+        addMessage(message, "user");
+
+        input.value = "";
+
+        document.getElementById("typing").style.display = "block";
+
+        try {
+
+            const response = await fetch("/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    text: message
+                })
+            });
+
+            const data = await response.json();
+
+            document.getElementById("typing").style.display = "none";
+
+            if (data.error) {
+                addMessage(data.error, "bot");
+            } else {
+                addMessage(data.response, "bot");
+            }
+
+        } catch (error) {
+
+            document.getElementById("typing").style.display = "none";
+
+            addMessage(
+                "Sorry, something went wrong. Please try again.",
+                "bot"
+            );
+        }
+    }
+
+
+    function addMessage(text, sender) {
+
+        const chat = document.getElementById("chat");
+
+        const messageDiv = document.createElement("div");
+
+        messageDiv.className = "message " + sender;
+
+        const bubble = document.createElement("div");
+
+        bubble.className = "bubble";
+
+        bubble.textContent = text;
+
+        messageDiv.appendChild(bubble);
+
+        chat.appendChild(messageDiv);
+
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+
+    function handleKeyPress(event) {
+
+        if (event.key === "Enter") {
+            sendMessage();
+        }
+
+    }
+
+</script>
+
+</body>
+</html>
